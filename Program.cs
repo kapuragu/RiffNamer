@@ -38,10 +38,10 @@ namespace RiffNamer
                     continue;
                 };
 
-                //Filename for renaming later and for logs
-                string fileName = Path.GetFileNameWithoutExtension(arg);
+                //Filename for logs
+                string fileName = Path.GetFileName(arg);
 
-                /*if (!Path.HasExtension(arg))
+                if (!Path.HasExtension(arg))
                 {
                     Console.WriteLine($"{fileName} has no extension!!!");
                     continue;
@@ -51,7 +51,7 @@ namespace RiffNamer
                 {
                     Console.WriteLine($"{fileName}.{Path.GetExtension(arg).Substring(1)} Not a .WEM file!!!");
                     continue;
-                };*/
+                };
 
                 //Filename marker, will be filled in if found
                 string embeddedFilenameMarker = "";
@@ -66,7 +66,7 @@ namespace RiffNamer
                     string signature = new string(reader.ReadChars(4));
                     if (signature != "RIFF")
                     {
-                        Console.WriteLine($"{fileName}.wem Not a RIFF file!!! {signature}");
+                        Console.WriteLine($"{fileName} Not a RIFF file!!! {signature}");
                         continue;
                     };
                     uint fileSize = reader.ReadUInt32();
@@ -75,7 +75,7 @@ namespace RiffNamer
                     //No idea what this would mean but sure let's check for that
                     if (riffType != "WAVE")
                     {
-                        Console.WriteLine($"{fileName}.wem RIFF not a WAVE!!! {riffType}");
+                        Console.WriteLine($"{fileName} RIFF not a WAVE!!! {riffType}");
                         continue;
                     };
 
@@ -106,7 +106,7 @@ namespace RiffNamer
 
                 if (embeddedFilenameMarker == "")
                 {
-                    Console.WriteLine($"{fileName}.wem Does not contain an embedded filename marker!!!");
+                    Console.WriteLine($"{fileName} Does not contain an embedded filename marker!!!");
                     continue;
                 };
 
