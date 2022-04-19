@@ -31,6 +31,7 @@ namespace RiffNamer
             //Main read loop
             foreach (string arg in args)
             {
+                Console.WriteLine($"{arg}:");
                 //Argument just isn't a file
                 if (!File.Exists(arg))
                 {
@@ -41,7 +42,8 @@ namespace RiffNamer
                 //Filename for logs
                 string fileName = Path.GetFileName(arg);
 
-                if (!Path.HasExtension(arg))
+                //Extension check
+                /*if (!Path.HasExtension(arg))
                 {
                     Console.WriteLine($"{fileName} has no extension!!!");
                     continue;
@@ -51,7 +53,7 @@ namespace RiffNamer
                 {
                     Console.WriteLine($"{fileName}.{Path.GetExtension(arg).Substring(1)} Not a .WEM file!!!");
                     continue;
-                };
+                };*/
 
                 //Filename marker, will be filled in if found
                 string embeddedFilenameMarker = "";
@@ -59,21 +61,31 @@ namespace RiffNamer
                 //Actual binary reading time
                 using (BinaryReader reader = new BinaryReader(new FileStream(arg, FileMode.Open)))
                 {
+
+                    if (reader.BaseStream.Length<=0)
+                    {
+                        Console.WriteLine($"{fileName} is empty!!!"); //TODO?
+                        continue;
+                    };
                     //Based on 010 Editor template by gocha:
                     //https://www.sweetscape.com/010editor/repository/templates/file_info.php?file=RIFF.bt
 
                     //Header:
-                    string signature = new string(reader.ReadChars(4));
-                    if (signature != "RIFF")
+                    uint signature = reader.ReadUInt32();
+                    if (Convert.ToString(signature, 16) != "RIFF".ToHex())
                     {
-                        Console.WriteLine($"{fileName} Not a RIFF file!!! {signature}");
+                        if (Convert.ToString(signature, 16) == "RIFX".ToHex())
+                            Console.WriteLine($"{fileName} is a Big-Endian RIFF, unsupported!!!"); //TODO?
+                        else
+                            Console.WriteLine($"{fileName} Not a RIFF file!!! {signature}");
                         continue;
                     };
+
                     uint fileSize = reader.ReadUInt32();
-                    string riffType = new string(reader.ReadChars(4));
 
                     //No idea what this would mean but sure let's check for that
-                    if (riffType != "WAVE")
+                    uint riffType = reader.ReadUInt32();
+                    if (Convert.ToString(riffType, 16) != "WAVE".ToHex())
                     {
                         Console.WriteLine($"{fileName} RIFF not a WAVE!!! {riffType}");
                         continue;
@@ -82,7 +94,10 @@ namespace RiffNamer
                     //Chunk reading: trying to find the chunk that has the filename marker
                     while (reader.BaseStream.Position<fileSize)
                     {
-                        switch(new string(reader.ReadChars(4)))
+                        //switched to using Convert.ToUInt32 elsewhere,
+                        //but since we're sure this is a riff file already,
+                        //its probably okay for now
+                        switch (new string(reader.ReadChars(4)))
                         {
                             //Actual chunk with the filename marker
                             case "LIST":
@@ -96,9 +111,16 @@ namespace RiffNamer
                                 reader.AlignStream(2);
                                 break;
                             //Default generic chunk to skip
-                            default:
+                            case "fmt ":
+                            case "cue ":
+                            case "smpl":
+                            case "vorb":
+                            case "data":
                                 uint genericChunkSize = reader.ReadUInt32();
                                 reader.BaseStream.Position += genericChunkSize;
+                                break;
+                            default:
+                                Console.WriteLine($"{fileName} Unknown entry type!! {riffType}");
                                 break;
                         };
                     };

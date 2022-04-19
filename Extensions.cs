@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace RiffNamer
 {
@@ -22,6 +24,16 @@ namespace RiffNamer
             long pos = reader.BaseStream.Position;
             if (pos % div != 0)
                 reader.BaseStream.Position += div - pos % div;
+        }
+        public static string ToHex(this string input)
+        {
+            StringBuilder sb = new StringBuilder();
+            char[] charArray = input.ToCharArray();
+            Array.Reverse(charArray); //endian
+            foreach (char c in charArray)
+                sb.AppendFormat("{0:X2}", (int)c);
+            Console.WriteLine($"{input} => {sb.ToString().Trim()}");
+            return sb.ToString().Trim();
         }
     }
 }
