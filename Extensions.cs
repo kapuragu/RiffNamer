@@ -32,7 +32,6 @@ namespace RiffNamer
             Array.Reverse(charArray); //endian
             foreach (char c in charArray)
                 sb.AppendFormat("{0:X2}", (int)c);
-            Console.WriteLine($"{input} => {sb.ToString().Trim()}");
             return sb.ToString().Trim();
         }
     }

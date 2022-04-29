@@ -10,8 +10,8 @@ namespace RiffNamer
             //Extensions to check for when renaming companion files
             string[] extraFileExtensons = new string[]
             {
-                "ls2",
-                "bin",
+                "ls2", //StpTool
+                "bin", //SBP_Tool
             };
 
             //Check if argument is folder and add folder contents to arguments
@@ -41,6 +41,7 @@ namespace RiffNamer
 
                 //Filename for logs
                 string fileName = Path.GetFileName(arg);
+                string fileNameNoExt = Path.GetFileNameWithoutExtension(arg);
 
                 //Extension check
                 /*if (!Path.HasExtension(arg))
@@ -137,7 +138,7 @@ namespace RiffNamer
                 foreach (string ext in extraFileExtensons)
                 {
                     string dir = Path.GetDirectoryName(arg);
-                    string potentialExtraFileNamePath = dir + "\\" + Path.GetFileNameWithoutExtension(arg) + "." + ext;
+                    string potentialExtraFileNamePath = dir + "\\" + fileNameNoExt + "." + ext;
                     if (File.Exists(potentialExtraFileNamePath))
                         Rename(potentialExtraFileNamePath, embeddedFilenameMarker);
                 };
@@ -148,21 +149,20 @@ namespace RiffNamer
             string dir = Path.GetDirectoryName(path);
             name = name.Normalize();
             string ext = Path.GetExtension(path).Substring(1);
-            string newPath = dir + "\\" + name + "." + ext;
-            if (!File.Exists(newPath))
+            string newPath = dir + "\\" + name + "_" + Path.GetFileNameWithoutExtension(path) + "." + ext;
+            if (!Path.GetFileNameWithoutExtension(path).StartsWith(name + "_"))
             {
+                //Rename to originalstringname_numbername
                 File.Move(path, newPath);
-                Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name}");
+                Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name + "_" + Path.GetFileNameWithoutExtension(path)}");
             }
             else
             {
-                if (path != newPath)
-                {
-                    File.Move(path, dir + "\\" + name + "_" + Path.GetFileNameWithoutExtension(path) + "." + ext);
-                    Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name + "_" + Path.GetFileNameWithoutExtension(path)}");
-                }
-                else
-                    Console.WriteLine($"{Path.GetFileName(path)} already named!!!");
+                //Rename back to numbername
+                name = Path.GetFileNameWithoutExtension(path).Replace(name + "_", string.Empty);
+                newPath = dir + "\\" + name + "." + ext;
+                File.Move(path, newPath);
+                Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name}");
             }
         }
     }
