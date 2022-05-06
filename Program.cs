@@ -1,10 +1,13 @@
 ﻿using System;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 
 namespace RiffNamer
 {
     internal static class Program
     {
+        private const string EmbeddedFilenameStringsFileName = "embedded_filename_strings.txt";
         private static void Main(string[] args)
         {
             //Extensions to check for when renaming companion files
@@ -121,7 +124,10 @@ namespace RiffNamer
                                 reader.BaseStream.Position += genericChunkSize;
                                 break;
                             default:
-                                Console.WriteLine($"{fileName} Unknown entry type!! {riffType}");
+                                reader.BaseStream.Position -= 4;
+                                Console.WriteLine($"{fileName} Unknown entry type!! {reader.ReadUInt32()}");
+                                uint unknownChunkSize = reader.ReadUInt32();
+                                reader.BaseStream.Position += unknownChunkSize;
                                 break;
                         };
                     };
@@ -133,18 +139,22 @@ namespace RiffNamer
                     continue;
                 };
 
-                Rename(arg, embeddedFilenameMarker);
+                DumpEmbeddedFilenameMarkers(embeddedFilenameMarker);
+                PrefixName(arg, embeddedFilenameMarker);
 
                 foreach (string ext in extraFileExtensons)
                 {
                     string dir = Path.GetDirectoryName(arg);
                     string potentialExtraFileNamePath = dir + "\\" + fileNameNoExt + "." + ext;
+                    string potentialExtraFileNamePath2 = dir + "\\" + embeddedFilenameMarker + "." + ext;
                     if (File.Exists(potentialExtraFileNamePath))
-                        Rename(potentialExtraFileNamePath, embeddedFilenameMarker);
+                        PrefixName(potentialExtraFileNamePath, embeddedFilenameMarker);
+                    if (File.Exists(potentialExtraFileNamePath2))
+                        Rename(potentialExtraFileNamePath2, embeddedFilenameMarker + "_" + fileNameNoExt);
                 };
             };
         }
-        public static void Rename(string path, string name)
+        public static void PrefixName(string path, string name)
         {
             string dir = Path.GetDirectoryName(path);
             name = name.Normalize();
@@ -164,6 +174,28 @@ namespace RiffNamer
                 File.Move(path, newPath);
                 Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name}");
             }
+        }
+        public static void Rename(string path, string name)
+        {
+            string dir = Path.GetDirectoryName(path);
+            name = name.Normalize();
+            string ext = Path.GetExtension(path).Substring(1);
+            string newPath = dir + "\\" + name + "." + ext;
+            File.Move(path, newPath);
+            Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name + "_" + Path.GetFileNameWithoutExtension(path)}");
+        }
+        public static void DumpEmbeddedFilenameMarkers(string name)
+        {
+            string path = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) + "/" + EmbeddedFilenameStringsFileName;
+
+            using (StreamWriter file = new StreamWriter(path, append: true))
+            {
+                file.WriteLine(name);
+            }
+
+            var contents = File.ReadAllLines(path).Distinct().ToArray();
+            Array.Sort(contents);
+            File.WriteAllLines(path, contents);
         }
     }
 }
