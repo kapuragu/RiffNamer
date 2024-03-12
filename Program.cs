@@ -120,6 +120,7 @@ namespace RiffNamer
                             case "smpl":
                             case "vorb":
                             case "data":
+                            case "JUNK":
                                 uint genericChunkSize = reader.ReadUInt32();
                                 reader.BaseStream.Position += genericChunkSize;
                                 break;
