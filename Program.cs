@@ -13,9 +13,20 @@ namespace RiffNamer
             //Extensions to check for when renaming companion files
             string[] extraFileExtensons = new string[]
             {
+                "ls", //SAB
                 "ls2", //StpTool
                 "bin", //SBP_Tool
             };
+
+            bool noSuffix = false;
+
+            foreach (string arg in args)
+            {
+                if (arg.ToLower().Equals("-nosuf"))
+                {
+                    noSuffix = true;
+                }
+            }
 
             //Check if argument is folder and add folder contents to arguments
             foreach (string arg in args)
@@ -141,7 +152,10 @@ namespace RiffNamer
                 };
 
                 DumpEmbeddedFilenameMarkers(embeddedFilenameMarker);
-                PrefixName(arg, embeddedFilenameMarker);
+                if (noSuffix)
+                    Rename(arg, embeddedFilenameMarker);
+                else
+                    PrefixName(arg, embeddedFilenameMarker);
 
                 foreach (string ext in extraFileExtensons)
                 {
@@ -150,8 +164,17 @@ namespace RiffNamer
                     string potentialExtraFileNamePath2 = dir + "\\" + embeddedFilenameMarker + "." + ext;
                     if (File.Exists(potentialExtraFileNamePath))
                         PrefixName(potentialExtraFileNamePath, embeddedFilenameMarker);
+
                     if (File.Exists(potentialExtraFileNamePath2))
-                        Rename(potentialExtraFileNamePath2, embeddedFilenameMarker + "_" + fileNameNoExt);
+                    {
+                        if (uint.TryParse(fileNameNoExt, out uint soundFileId))
+                            if (noSuffix)
+                                Rename(potentialExtraFileNamePath2, embeddedFilenameMarker);
+                            else
+                                Rename(potentialExtraFileNamePath2, embeddedFilenameMarker + "_" + soundFileId.ToString());
+                        else
+                            Rename(potentialExtraFileNamePath2, fileNameNoExt);
+                    }
                 };
             };
         }
@@ -183,7 +206,7 @@ namespace RiffNamer
             string ext = Path.GetExtension(path).Substring(1);
             string newPath = dir + "\\" + name + "." + ext;
             File.Move(path, newPath);
-            Console.WriteLine($"Renamed {Path.GetFileName(path)} to {name + "_" + Path.GetFileNameWithoutExtension(path)}");
+            Console.WriteLine($"Renamed {Path.GetFileName(path)} to {Path.GetFileNameWithoutExtension(newPath)}");
         }
         public static void DumpEmbeddedFilenameMarkers(string name)
         {
