@@ -217,6 +217,7 @@ namespace RiffNamer
                 {
                     string dotExt = "." + ext;
                     string extPath = dir + "\\" + fileNameNoExt + dotExt;
+                    string extEmbeddedFiilenamePath = dir + "\\" + embeddedFilenameMarker + dotExt;
                     if (File.Exists(extPath))
                     {
                         if (!File.Exists(newPath + dotExt))
@@ -225,9 +226,16 @@ namespace RiffNamer
                             Console.WriteLine($"{extPath} renamed to {newPath + dotExt}");
                         }
                     }
+                    if (File.Exists(extEmbeddedFiilenamePath))
+                    {
+                        if (!File.Exists(newPath + dotExt))
+                        {
+                            File.Move(extEmbeddedFiilenamePath, newPath + dotExt);
+                            Console.WriteLine($"{extEmbeddedFiilenamePath} renamed to {newPath + dotExt}");
+                        }
+                    }
                 };
             };
-            Console.Read();
         }
         public static void PrefixName(string path, string name)
         {
